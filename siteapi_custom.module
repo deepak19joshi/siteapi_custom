@@ -1,0 +1,108 @@
+<?php
+/**
+ * @file
+ * This module configure API key field and
+ * provide URL to get page node data in JSON format
+ * 
+ * @author Deepak Joshi <deepakjoshi.mca@gmail.com>
+ */
+
+
+/**
+ * Implements hook_help().
+ */
+function siteapi_custom_help($path, $arg) {
+  switch ($path) {
+    case 'admin/help#siteapi_custom':
+      $output = '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('Added site API configuration in Site information settings section.') . '</p>';
+      $output .= '<p>' . t('Provides Site API Key field and URL for returns page node content in JSON format') . '</p>';
+
+      return $output;
+  }
+}
+
+/**
+ * Implements hook_menu().
+ */
+function siteapi_custom_menu() {
+  $items['page_json/%/%node'] = array(
+    'title' => 'Page node to JSON format',
+    'description' => 'Returns given page node content in JSON format',
+    'page callback' => 'siteapikey_page_json_format',
+    'page arguments' => array(2),
+    'access callback' => '_siteapikey_page_json_access',
+    'access arguments' => array(1, 2),
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Alter the site information settings form.
+ *
+ * @see system_site_information_settings()
+ */
+function siteapi_custom_form_system_site_information_settings_alter(&$form, $form_state, $form_id) {
+  $form['site_information']['siteapikey'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Site API Key'),
+    '#description' => t('Enter your Site API key here.'),
+    '#default_value' => variable_get('siteapikey', 'No API Key yet'),
+    '#required' => FALSE,
+    '#attributes' => array(
+      'placeholder' => t('No API Key yet'),
+    ),
+  );
+
+  // Change of submit button value.
+  $form['actions']['submit']['#value'] = !empty(variable_get('siteapikey', '')) ? t('Update Configuration') : t('Save Configuration');
+  $form['#submit'][] = 'siteapi_custom_handler';
+
+}
+
+/**
+ * Submit handler for save Site API Key.
+ */
+function siteapi_custom_handler($form, &$form_state) {
+  $key_value = $form_state['values']['siteapikey'];
+
+  if (isset($key_value) && !empty($key_value)) {
+    variable_set('siteapikey', $key_value);
+    drupal_set_message(t('Site API Key has been saved with "@apikey" value.', array('@apikey' => $key_value)), 'status');
+  }
+
+}
+
+
+/**
+ * Access callback: Checks page node access with correct Site API Key.
+ *
+ * @param string $siteapikey
+ *   The given site api key.
+ * @param object $node
+ *   The node to check.
+ *
+ * @return bool
+ *   TRUE if the operation may be performed, FALSE otherwise.
+ *
+ * @see siteapi_custom_menu()
+ */
+function _siteapikey_page_json_access($siteapikey, $node) {
+  return $node && $node->type == 'page'
+    && $siteapikey == variable_get('siteapikey', 'No API Key yet');
+}
+
+
+/**
+ * Page callback for page json response.
+ *
+ * @param $node
+ *
+ * @return JSON format of node.
+ */
+function siteapikey_page_json_format($node) {
+  drupal_json_output($node);
+  drupal_exit();
+}

@@ -1,0 +1,6 @@
+name =  Site API Key
+description = Provides Site API Key field and URL for returns page node content in JSON format
+version = 1.0
+core = 7.x
+package = Custom Modules
+configure = admin/config/system/site-information

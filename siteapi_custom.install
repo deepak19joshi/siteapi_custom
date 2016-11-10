@@ -1,0 +1,13 @@
+<?php
+/**
+ * @file
+ * Removing custom variable.
+ */
+
+/**
+ * Implements hook_uninstall().
+ */
+function siteapi_custom_uninstall() {
+  // Remove unused variable.
+  variable_del('siteapikey');
+}
